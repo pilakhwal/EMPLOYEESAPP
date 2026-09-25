@@ -5,6 +5,22 @@ export interface Employee {
   position: string;
   avatar: string;
   active: boolean;
+  email: string;
+  password: string;
+  twoFactorEnabled: boolean;
+}
+
+export interface AdminConfig {
+  password: string;
+  email: string;
+  twoFactorEnabled: boolean;
+}
+
+export interface OTPSession {
+  email: string;
+  code: string;
+  expiresAt: number;
+  purpose: 'admin-login' | 'employee-login' | 'password-change';
 }
 
 export interface ShootEntry {
@@ -52,10 +68,14 @@ export interface TaskItem {
 
 export type UserRole = 'admin' | 'employee';
 
-export interface AppState {
-  currentUser: Employee | null;
-  role: UserRole;
-  employees: Employee[];
-  shootEntries: ShootEntry[];
-  dailyReports: DailyReport[];
+export interface Notification {
+  id: string;
+  type: 'email' | 'success' | 'error' | 'info';
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  to?: string;
+  subject?: string;
+  code?: string;
 }

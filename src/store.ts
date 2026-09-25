@@ -1,19 +1,28 @@
-import { Employee, ShootEntry, DailyReport } from './types';
+import { Employee, AdminConfig, OTPSession, ShootEntry, DailyReport, Notification } from './types';
 
 const KEYS = {
-  EMPLOYEES: 'app_employees',
+  EMPLOYEES: 'app_employees_v2',
   SHOOTS: 'app_shoot_entries',
   REPORTS: 'app_daily_reports',
   SHEETS_URL: 'app_sheets_url',
+  ADMIN_CONFIG: 'app_admin_config',
+  OTP_SESSION: 'app_otp_session',
+  NOTIFICATIONS: 'app_notifications',
 };
 
 const defaultEmployees: Employee[] = [
-  { id: 'emp-1', name: 'Rahul Sharma', department: 'Camera', position: 'Cinematographer', avatar: 'RS', active: true },
-  { id: 'emp-2', name: 'Priya Patel', department: 'Production', position: 'Producer', avatar: 'PP', active: true },
-  { id: 'emp-3', name: 'Amit Kumar', department: 'Lighting', position: 'Gaffer', avatar: 'AK', active: true },
-  { id: 'emp-4', name: 'Sneha Gupta', department: 'Post Production', position: 'Editor', avatar: 'SG', active: true },
-  { id: 'emp-5', name: 'Vikram Singh', department: 'Camera', position: 'Camera Operator', avatar: 'VS', active: true },
+  { id: 'emp-1', name: 'Rahul Sharma', department: 'Camera', position: 'Cinematographer', avatar: 'RS', active: true, email: 'rahul@studio.com', password: 'rahul123', twoFactorEnabled: true },
+  { id: 'emp-2', name: 'Priya Patel', department: 'Production', position: 'Producer', avatar: 'PP', active: true, email: 'priya@studio.com', password: 'priya123', twoFactorEnabled: true },
+  { id: 'emp-3', name: 'Amit Kumar', department: 'Lighting', position: 'Gaffer', avatar: 'AK', active: true, email: 'amit@studio.com', password: 'amit123', twoFactorEnabled: false },
+  { id: 'emp-4', name: 'Sneha Gupta', department: 'Post Production', position: 'Editor', avatar: 'SG', active: true, email: 'sneha@studio.com', password: 'sneha123', twoFactorEnabled: true },
+  { id: 'emp-5', name: 'Vikram Singh', department: 'Camera', position: 'Camera Operator', avatar: 'VS', active: true, email: 'vikram@studio.com', password: 'vikram123', twoFactorEnabled: false },
 ];
+
+const defaultAdminConfig: AdminConfig = {
+  password: 'admin123',
+  email: 'admin@studio.com',
+  twoFactorEnabled: true,
+};
 
 const generateSampleShoots = (): ShootEntry[] => {
   const entries: ShootEntry[] = [];
@@ -83,6 +92,118 @@ const generateSampleReports = (): DailyReport[] => {
   return reports;
 };
 
+// Admin Config
+export const getAdminConfig = (): AdminConfig => {
+  const stored = localStorage.getItem(KEYS.ADMIN_CONFIG);
+  if (stored) return JSON.parse(stored);
+  localStorage.setItem(KEYS.ADMIN_CONFIG, JSON.stringify(defaultAdminConfig));
+  return defaultAdminConfig;
+};
+
+export const saveAdminConfig = (config: AdminConfig) => {
+  localStorage.setItem(KEYS.ADMIN_CONFIG, JSON.stringify(config));
+};
+
+export const verifyAdminPassword = (password: string): boolean => {
+  return getAdminConfig().password === password;
+};
+
+export const changeAdminPassword = (oldPassword: string, newPassword: string): boolean => {
+  const config = getAdminConfig();
+  if (config.password !== oldPassword) return false;
+  config.password = newPassword;
+  saveAdminConfig(config);
+  return true;
+};
+
+// OTP / 2FA System
+export const generateOTP = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+export const createOTPSession = (email: string, purpose: OTPSession['purpose']): string => {
+  const code = generateOTP();
+  const session: OTPSession = {
+    email,
+    code,
+    expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+    purpose,
+  };
+  localStorage.setItem(KEYS.OTP_SESSION, JSON.stringify(session));
+  
+  // Create email notification (simulated)
+  addNotification({
+    type: 'email',
+    title: '🔐 Verification Code - StudioTrack Pro',
+    message: `Your verification code is: ${code}. This code expires in 5 minutes. Do not share this code with anyone.`,
+    to: email,
+    subject: 'Two-Factor Authentication Code',
+    code,
+  });
+  
+  return code;
+};
+
+export const verifyOTP = (code: string): boolean => {
+  const stored = localStorage.getItem(KEYS.OTP_SESSION);
+  if (!stored) return false;
+  const session: OTPSession = JSON.parse(stored);
+  if (Date.now() > session.expiresAt) {
+    localStorage.removeItem(KEYS.OTP_SESSION);
+    return false;
+  }
+  if (session.code === code) {
+    localStorage.removeItem(KEYS.OTP_SESSION);
+    return true;
+  }
+  return false;
+};
+
+export const getCurrentOTP = (): string | null => {
+  const stored = localStorage.getItem(KEYS.OTP_SESSION);
+  if (!stored) return null;
+  const session: OTPSession = JSON.parse(stored);
+  if (Date.now() > session.expiresAt) {
+    localStorage.removeItem(KEYS.OTP_SESSION);
+    return null;
+  }
+  return session.code;
+};
+
+// Notifications (Simulated Email Inbox)
+export const getNotifications = (): Notification[] => {
+  const stored = localStorage.getItem(KEYS.NOTIFICATIONS);
+  if (stored) return JSON.parse(stored);
+  return [];
+};
+
+export const addNotification = (notification: Pick<Notification, 'type' | 'title' | 'message'> & Partial<Pick<Notification, 'to' | 'subject' | 'code'>>) => {
+  const notifications = getNotifications();
+  notifications.unshift({
+    id: `notif-${Date.now()}`,
+    type: notification.type,
+    title: notification.title,
+    message: notification.message,
+    timestamp: Date.now(),
+    read: false,
+    to: notification.to,
+    subject: notification.subject,
+    code: notification.code,
+  });
+  // Keep only last 50 notifications
+  const trimmed = notifications.slice(0, 50);
+  localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(trimmed));
+};
+
+export const markNotificationRead = (id: string) => {
+  const notifications = getNotifications().map(n => n.id === id ? { ...n, read: true } : n);
+  localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(notifications));
+};
+
+export const clearNotifications = () => {
+  localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify([]));
+};
+
 // Employees
 export const getEmployees = (): Employee[] => {
   const stored = localStorage.getItem(KEYS.EMPLOYEES);
@@ -110,6 +231,20 @@ export const updateEmployee = (id: string, data: Partial<Employee>) => {
 export const deleteEmployee = (id: string) => {
   const emps = getEmployees().filter(e => e.id !== id);
   saveEmployees(emps);
+};
+
+export const verifyEmployeePassword = (id: string, password: string): boolean => {
+  const emp = getEmployees().find(e => e.id === id);
+  return emp?.password === password;
+};
+
+export const changeEmployeePassword = (id: string, oldPassword: string, newPassword: string): boolean => {
+  const emps = getEmployees();
+  const idx = emps.findIndex(e => e.id === id);
+  if (idx < 0 || emps[idx].password !== oldPassword) return false;
+  emps[idx].password = newPassword;
+  saveEmployees(emps);
+  return true;
 };
 
 // Shoot Entries

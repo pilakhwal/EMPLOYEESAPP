@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Employee, ShootEntry, DailyReport, TaskItem } from '../types';
-import { getShootEntries, getDailyReports, saveShootEntry, saveDailyReport, syncToGoogleSheets, getEmployeeName, generateId } from '../store';
+import { getShootEntries, getDailyReports, saveShootEntry, saveDailyReport, syncToGoogleSheets, getEmployeeName, generateId, changeEmployeePassword } from '../store';
 import { formatDate, formatTime, getCurrentTime, getCurrentDate, calculateHours, fileToBase64 } from '../utils';
-import { Camera, Sun, FileText, LogOut, Clock, MapPin, User, Image, Upload, CheckCircle, Lock, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, Sun, FileText, LogOut, Clock, MapPin, User, Image, Upload, CheckCircle, Lock, Plus, Trash2, ChevronDown, ChevronUp, KeyRound, X } from 'lucide-react';
 
 interface EmployeeDashboardProps {
   employee: Employee;
@@ -16,6 +16,14 @@ export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashbo
   const [showForm, setShowForm] = useState(false);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState('');
+  
+  // Password Change
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   // Form State
   const [formDate, setFormDate] = useState(getCurrentDate());
@@ -137,6 +145,38 @@ export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashbo
     setTimeout(() => setSyncStatus(''), 3000);
   };
 
+  const handleChangePassword = () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All fields are required');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    
+    const success = changeEmployeePassword(employee.id, oldPassword, newPassword);
+    if (success) {
+      setPasswordSuccess('Password changed successfully!');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => {
+        setShowPasswordChange(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } else {
+      setPasswordError('Current password is incorrect');
+    }
+  };
+
   const addTask = () => {
     setTasks([...tasks, { id: generateId(), description: '', status: 'pending', hours: 1 }]);
   };
@@ -175,6 +215,13 @@ export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashbo
                 {syncStatus}
               </span>
             )}
+            <button 
+              onClick={() => setShowPasswordChange(!showPasswordChange)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <KeyRound size={16} />
+              <span className="hidden sm:inline">Password</span>
+            </button>
             <button onClick={onLogout} className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
               <LogOut size={16} />
               <span className="hidden sm:inline">Logout</span>
@@ -210,6 +257,72 @@ export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashbo
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Password Change Form */}
+        {showPasswordChange && (
+          <div className="bg-white rounded-2xl shadow-sm border border-blue-200 p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <KeyRound size={20} className="text-blue-600" />
+                Change Password
+              </h3>
+              <button onClick={() => { setShowPasswordChange(false); setPasswordError(''); setPasswordSuccess(''); }} className="p-1 hover:bg-slate-100 rounded">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-slate-500 block mb-1">Current Password</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Enter your current password"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 block mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Min 6 characters"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 block mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                />
+              </div>
+
+              {passwordError && <p className="text-sm text-red-500 bg-red-50 p-2 rounded-lg">{passwordError}</p>}
+              {passwordSuccess && <p className="text-sm text-green-600 bg-green-50 p-2 rounded-lg flex items-center gap-1"><CheckCircle size={14} /> {passwordSuccess}</p>}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowPasswordChange(false); setPasswordError(''); setPasswordSuccess(''); }}
+                  className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleChangePassword}
+                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 text-sm"
+                >
+                  Update Password
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* New Entry Button */}
         {!showForm && (
           <button
