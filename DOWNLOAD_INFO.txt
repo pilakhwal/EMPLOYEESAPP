@@ -64,7 +64,7 @@ studiTrack-pro/
 
 ADMIN:
   Password: admin123
-  Email: admin@studio.com
+  Email: lalit2info@gmail.com
   2FA: Enabled
 
 EMPLOYEES:

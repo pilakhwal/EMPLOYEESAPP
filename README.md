@@ -45,7 +45,7 @@ A comprehensive web application for managing studio attendance, shoot tracking, 
 
 **Admin Access:**
 - Password: `admin123`
-- Email: `admin@studio.com`
+- Email: `lalit2info@gmail.com`
 - 2FA: Enabled (check Email Inbox in Settings)
 
 **Employee Access:**

@@ -20,7 +20,7 @@ const defaultEmployees: Employee[] = [
 
 const defaultAdminConfig: AdminConfig = {
   password: 'admin123',
-  email: 'admin@studio.com',
+  email: 'lalit2info@gmail.com',
   twoFactorEnabled: true,
 };
 

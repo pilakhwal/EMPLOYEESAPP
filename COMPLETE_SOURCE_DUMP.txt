@@ -25,7 +25,7 @@ DEFAULT CREDENTIALS:
 
 ADMIN:
   Password: admin123
-  Email: admin@studio.com
+  Email: lalit2info@gmail.com
   2FA: Enabled
 
 EMPLOYEES:
@@ -308,7 +308,7 @@ const defaultEmployees: Employee[] = [
 
 const defaultAdminConfig: AdminConfig = {
   password: 'admin123',
-  email: 'admin@studio.com',
+  email: 'lalit2info@gmail.com',
   twoFactorEnabled: true,
 };
 
