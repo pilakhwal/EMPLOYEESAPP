@@ -8,10 +8,11 @@ interface AdminPanelProps {
   employees: Employee[];
   onLogout: () => void;
   onRefresh: () => void;
+  initialTab?: 'employees' | 'indoor' | 'outdoor' | 'reports' | 'settings';
 }
 
-export default function AdminPanel({ employees, onLogout, onRefresh }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'employees' | 'indoor' | 'outdoor' | 'reports' | 'settings'>('overview');
+export default function AdminPanel({ employees, onLogout, onRefresh, initialTab = 'employees' }: AdminPanelProps) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'employees' | 'indoor' | 'outdoor' | 'reports' | 'settings'>(initialTab);
   const [allEmployees, setAllEmployees] = useState<Employee[]>(employees);
   const [shoots, setShoots] = useState<ShootEntry[]>(getShootEntries());
   const [reports, setReports] = useState<DailyReport[]>(getDailyReports());

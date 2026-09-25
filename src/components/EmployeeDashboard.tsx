@@ -7,10 +7,12 @@ import { Camera, Sun, FileText, LogOut, Clock, MapPin, User, Image, Upload, Chec
 interface EmployeeDashboardProps {
   employee: Employee;
   onLogout: () => void;
+  initialTab?: 'indoor' | 'outdoor' | 'reports';
+  onTabChange?: (tab: string) => void;
 }
 
-export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'indoor' | 'outdoor' | 'reports'>('indoor');
+export default function EmployeeDashboard({ employee, onLogout, initialTab = 'indoor', onTabChange }: EmployeeDashboardProps) {
+  const [activeTab, setActiveTab] = useState<'indoor' | 'outdoor' | 'reports'>(initialTab);
   const [shoots, setShoots] = useState<ShootEntry[]>(getShootEntries());
   const [reports, setReports] = useState<DailyReport[]>(getDailyReports());
   const [showForm, setShowForm] = useState(false);
@@ -24,6 +26,13 @@ export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashbo
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  // Sync tab changes with parent
+  useEffect(() => {
+    if (onTabChange) {
+      onTabChange(activeTab);
+    }
+  }, [activeTab, onTabChange]);
 
   // Form State
   const [formDate, setFormDate] = useState(getCurrentDate());
@@ -196,64 +205,25 @@ export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashbo
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
-              {employee.avatar}
-            </div>
-            <div>
-              <h1 className="font-bold text-slate-800">{employee.name}</h1>
-              <p className="text-xs text-slate-400">{employee.department} • {employee.position}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {syncStatus && (
-              <span className="text-xs text-green-600 bg-green-50 px-3 py-1 rounded-full font-medium animate-pulse">
-                {syncStatus}
-              </span>
-            )}
-            <button 
-              onClick={() => setShowPasswordChange(!showPasswordChange)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            >
-              <KeyRound size={16} />
-              <span className="hidden sm:inline">Password</span>
-            </button>
-            <button onClick={onLogout} className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-          </div>
+    <div className="space-y-6">
+      {/* Sync Status */}
+      {syncStatus && (
+        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 flex items-center gap-2">
+          <CheckCircle size={16} className="text-green-600" />
+          <span className="text-sm text-green-700 font-medium">{syncStatus}</span>
         </div>
+      )}
 
-        {/* Tabs */}
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex gap-1 overflow-x-auto pb-0 -mb-px">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => { setActiveTab(tab.id); setShowForm(false); }}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
-                    activeTab === tab.id
-                      ? tab.color === 'purple' ? 'border-purple-600 text-purple-600' :
-                        tab.color === 'amber' ? 'border-amber-600 text-amber-600' :
-                        'border-green-600 text-green-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  <Icon size={16} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </header>
+      {/* Password Change Button */}
+      <div className="flex justify-end">
+        <button 
+          onClick={() => setShowPasswordChange(!showPasswordChange)}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+        >
+          <KeyRound size={16} />
+          Change Password
+        </button>
+      </div>
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-6">
@@ -680,10 +650,6 @@ export default function EmployeeDashboard({ employee, onLogout }: EmployeeDashbo
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 px-4 py-3 mt-8">
-        <p className="text-center text-xs text-slate-400">© 2026 StudioTrack Pro • Entries are locked after submission</p>
-      </footer>
     </div>
   );
 }
