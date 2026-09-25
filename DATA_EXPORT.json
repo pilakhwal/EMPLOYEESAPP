@@ -1,0 +1,236 @@
+{
+  "appInfo": {
+    "name": "StudioTrack Pro",
+    "version": "3.0.0",
+    "exportDate": "2026-01-15T10:30:00.000Z",
+    "description": "Professional Desktop & Mobile Attendance and Work Report System"
+  },
+  "credentials": {
+    "admin": {
+      "password": "admin123",
+      "email": "admin@studio.com",
+      "twoFactorEnabled": true
+    },
+    "employees": [
+      {
+        "id": "emp-1",
+        "name": "Rahul Sharma",
+        "department": "Camera",
+        "position": "Cinematographer",
+        "email": "rahul@studio.com",
+        "password": "rahul123",
+        "twoFactorEnabled": true
+      },
+      {
+        "id": "emp-2",
+        "name": "Priya Patel",
+        "department": "Production",
+        "position": "Producer",
+        "email": "priya@studio.com",
+        "password": "priya123",
+        "twoFactorEnabled": true
+      },
+      {
+        "id": "emp-3",
+        "name": "Amit Kumar",
+        "department": "Lighting",
+        "position": "Gaffer",
+        "email": "amit@studio.com",
+        "password": "amit123",
+        "twoFactorEnabled": false
+      },
+      {
+        "id": "emp-4",
+        "name": "Sneha Gupta",
+        "department": "Post Production",
+        "position": "Editor",
+        "email": "sneha@studio.com",
+        "password": "sneha123",
+        "twoFactorEnabled": true
+      },
+      {
+        "id": "emp-5",
+        "name": "Vikram Singh",
+        "department": "Camera",
+        "position": "Camera Operator",
+        "email": "vikram@studio.com",
+        "password": "vikram123",
+        "twoFactorEnabled": false
+      }
+    ]
+  },
+  "sampleData": {
+    "shootEntries": [
+      {
+        "id": "shoot-1",
+        "date": "2026-01-09",
+        "time": "09:00",
+        "employeeId": "emp-1",
+        "type": "outdoor",
+        "checkIn": "09:00",
+        "checkOut": "17:30",
+        "totalHours": 8.5,
+        "location": "Studio A",
+        "clientName": "Tata Motors",
+        "projectDetails": "Product photography and video shoot",
+        "photoUrl": null,
+        "photoName": null,
+        "submittedAt": "2026-01-09T09:00:00.000Z",
+        "locked": true
+      },
+      {
+        "id": "shoot-2",
+        "date": "2026-01-10",
+        "time": "09:00",
+        "employeeId": "emp-2",
+        "type": "indoor",
+        "checkIn": "09:00",
+        "checkOut": "17:30",
+        "totalHours": 8.5,
+        "location": "Client Office",
+        "clientName": "Reliance Retail",
+        "projectDetails": "Product photography and video shoot",
+        "photoUrl": null,
+        "photoName": null,
+        "submittedAt": "2026-01-10T09:00:00.000Z",
+        "locked": true
+      }
+    ],
+    "dailyReports": [
+      {
+        "id": "report-1",
+        "date": "2026-01-09",
+        "time": "09:00",
+        "employeeId": "emp-3",
+        "checkIn": "09:00",
+        "checkOut": "17:00",
+        "totalHours": 8,
+        "tasks": [
+          {
+            "id": "t1-1",
+            "description": "Video editing for client project",
+            "status": "completed",
+            "hours": 3
+          },
+          {
+            "id": "t2-1",
+            "description": "Team meeting and planning",
+            "status": "completed",
+            "hours": 1
+          },
+          {
+            "id": "t3-1",
+            "description": "Color grading and review",
+            "status": "completed",
+            "hours": 2
+          }
+        ],
+        "summary": "Completed all assigned tasks for the day.",
+        "challenges": "",
+        "tomorrowPlan": "Continue with post-production work.",
+        "photoUrl": null,
+        "photoName": null,
+        "submittedAt": "2026-01-09T09:00:00.000Z",
+        "locked": true
+      }
+    ]
+  },
+  "localStorageKeys": {
+    "employees": "app_employees_v2",
+    "shoots": "app_shoot_entries",
+    "reports": "app_daily_reports",
+    "sheetsUrl": "app_sheets_url",
+    "adminConfig": "app_admin_config",
+    "otpSession": "app_otp_session",
+    "notifications": "app_notifications"
+  },
+  "features": {
+    "authentication": [
+      "Password-based login",
+      "Two-factor authentication (2FA)",
+      "Email OTP verification",
+      "Password change/reset"
+    ],
+    "adminFeatures": [
+      "Dashboard with analytics",
+      "Employee management",
+      "Shoot entry management",
+      "Daily report management",
+      "Password management",
+      "2FA toggle per user",
+      "Google Sheets backup",
+      "Email inbox simulation"
+    ],
+    "employeeFeatures": [
+      "Indoor shoot entry",
+      "Outdoor shoot entry",
+      "Daily work report",
+      "Photo upload (JPEG)",
+      "Auto-calculated hours",
+      "Entry history",
+      "Password change"
+    ],
+    "uiFeatures": [
+      "Desktop sidebar navigation",
+      "Keyboard shortcuts",
+      "Responsive design",
+      "Modern animations",
+      "Color-coded tabs"
+    ]
+  },
+  "keyboardShortcuts": {
+    "?": "Show/hide shortcuts",
+    "Alt+1": "Dashboard",
+    "Alt+2": "Employees",
+    "Alt+3": "Indoor Shoots",
+    "Alt+4": "Outdoor Shoots",
+    "Alt+5": "Daily Reports",
+    "Alt+6": "Settings"
+  },
+  "techStack": {
+    "frontend": "React 18.2.0",
+    "language": "TypeScript 5.7.0",
+    "styling": "Tailwind CSS 4.1.7",
+    "buildTool": "Vite 6.3.5",
+    "icons": "Lucide React 0.294.0",
+    "storage": "LocalStorage"
+  },
+  "projectStructure": {
+    "root": [
+      "package.json",
+      "README.md",
+      "index.html",
+      "COMPLETE_SOURCE_DUMP.txt",
+      "DATA_EXPORT.json"
+    ],
+    "src": [
+      "App.tsx",
+      "main.tsx",
+      "index.css",
+      "types.ts",
+      "store.ts",
+      "utils.ts"
+    ],
+    "src/components": [
+      "Login.tsx",
+      "AdminPanel.tsx",
+      "AdminDashboard.tsx",
+      "EmployeeDashboard.tsx",
+      "DesktopLayout.tsx"
+    ]
+  },
+  "setupInstructions": {
+    "install": "npm install",
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "preview": "npm run preview"
+  },
+  "notes": [
+    "All data is stored in browser localStorage",
+    "For production, integrate with backend database",
+    "Google Sheets backup requires Apps Script deployment",
+    "Photo uploads are stored as base64 in localStorage",
+    "OTP codes expire after 5 minutes",
+    "Entries are locked after submission (admin-only edit)"
+  ]
+}

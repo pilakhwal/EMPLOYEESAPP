@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Employee, ShootEntry, DailyReport, Notification } from '../types';
 import { getEmployees, saveEmployees, addEmployee, updateEmployee, deleteEmployee, getShootEntries, getDailyReports, saveShootEntry, saveDailyReport, deleteShootEntry, deleteDailyReport, getSheetsUrl, setSheetsUrl, syncAllToSheets, getEmployeeName, generateId, getAdminConfig, saveAdminConfig, changeAdminPassword, changeEmployeePassword, getNotifications, markNotificationRead, clearNotifications } from '../store';
 import { formatDate, formatTime, calculateHours } from '../utils';
-import { Users, FileText, Camera, Sun, Settings, LogOut, Plus, Edit2, Trash2, Save, X, Cloud, CheckCircle, Search, Shield, ChevronDown, ChevronUp, Image, Lock, Mail, KeyRound, Eye, EyeOff, Inbox, Trash } from 'lucide-react';
+import { Users, FileText, Camera, Sun, Settings, LogOut, Plus, Edit2, Trash2, Save, X, Cloud, CheckCircle, Search, Shield, ChevronDown, ChevronUp, Image, Lock, Mail, KeyRound, Eye, EyeOff, Inbox, Trash, Download, Upload } from 'lucide-react';
 
 interface AdminPanelProps {
   employees: Employee[];
@@ -116,6 +116,66 @@ export default function AdminPanel({ employees, onLogout, onRefresh, initialTab 
   const handleClearInbox = () => {
     clearNotifications();
     setNotifications([]);
+  };
+
+  // Data Export/Import
+  const handleExportData = () => {
+    const data = {
+      appInfo: {
+        name: 'StudioTrack Pro',
+        version: '3.0.0',
+        exportDate: new Date().toISOString(),
+      },
+      employees: getEmployees(),
+      shoots: getShootEntries(),
+      reports: getDailyReports(),
+      adminConfig: getAdminConfig(),
+      notifications: getNotifications(),
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `studiTrack-pro-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        
+        if (data.employees) {
+          localStorage.setItem('app_employees_v2', JSON.stringify(data.employees));
+        }
+        if (data.shoots) {
+          localStorage.setItem('app_shoot_entries', JSON.stringify(data.shoots));
+        }
+        if (data.reports) {
+          localStorage.setItem('app_daily_reports', JSON.stringify(data.reports));
+        }
+        if (data.adminConfig) {
+          localStorage.setItem('app_admin_config', JSON.stringify(data.adminConfig));
+        }
+        if (data.notifications) {
+          localStorage.setItem('app_notifications', JSON.stringify(data.notifications));
+        }
+        
+        alert('Data imported successfully! Refreshing...');
+        refreshData();
+      } catch (error) {
+        alert('Error importing data: Invalid JSON file');
+      }
+    };
+    reader.readAsText(file);
   };
 
   // Employee Management
@@ -839,6 +899,44 @@ export default function AdminPanel({ employees, onLogout, onRefresh, initialTab 
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Data Export/Import */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center">
+                  <Cloud size={20} className="text-cyan-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-800">Data Backup & Restore</h3>
+                  <p className="text-sm text-slate-400">Export or import all app data</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={handleExportData}
+                  className="flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-medium hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg shadow-cyan-500/20"
+                >
+                  <Download size={18} />
+                  Export All Data (JSON)
+                </button>
+                
+                <label className="flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-medium hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg shadow-green-500/20 cursor-pointer">
+                  <Upload size={18} />
+                  Import Data (JSON)
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportData}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              
+              <p className="text-xs text-slate-400 mt-3">
+                💡 Export creates a complete backup of all employees, shoots, reports, and settings. Import restores data from a previous backup.
+              </p>
             </div>
 
             {/* App Info */}

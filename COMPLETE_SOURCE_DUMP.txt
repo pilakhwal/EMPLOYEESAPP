@@ -1,0 +1,710 @@
+================================================================================
+STUDIOTRACK PRO - COMPLETE SOURCE CODE DUMP
+Professional Desktop & Mobile Attendance and Work Report System
+Version: 3.0.0
+================================================================================
+
+TABLE OF CONTENTS:
+==================
+1. package.json
+2. src/types.ts
+3. src/utils.ts
+4. src/index.css
+5. src/main.tsx
+6. src/store.ts
+7. src/App.tsx
+8. src/components/Login.tsx
+9. src/components/AdminPanel.tsx
+10. src/components/AdminDashboard.tsx
+11. src/components/EmployeeDashboard.tsx
+12. src/components/DesktopLayout.tsx
+
+================================================================================
+DEFAULT CREDENTIALS:
+================================================================================
+
+ADMIN:
+  Password: admin123
+  Email: admin@studio.com
+  2FA: Enabled
+
+EMPLOYEES:
+  1. Rahul Sharma    - Password: rahul123   - Email: rahul@studio.com  - 2FA: ON
+  2. Priya Patel     - Password: priya123   - Email: priya@studio.com  - 2FA: ON
+  3. Amit Kumar      - Password: amit123    - Email: amit@studio.com   - 2FA: OFF
+  4. Sneha Gupta     - Password: sneha123   - Email: sneha@studio.com  - 2FA: ON
+  5. Vikram Singh    - Password: vikram123  - Email: vikram@studio.com - 2FA: OFF
+
+KEYBOARD SHORTCUTS (Admin Panel):
+  ?        - Show/hide shortcuts
+  Alt + 1  - Dashboard
+  Alt + 2  - Employees
+  Alt + 3  - Indoor Shoots
+  Alt + 4  - Outdoor Shoots
+  Alt + 5  - Daily Reports
+  Alt + 6  - Settings
+
+================================================================================
+FILE: package.json
+================================================================================
+
+{
+  "name": "sandbox-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@supabase/supabase-js": "^2.98.0",
+    "canvas-confetti": "^1.9.3",
+    "date-fns": "^2.30.0",
+    "framer-motion": "^11.16.1",
+    "lucide-react": "^0.294.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0",
+    "recharts": "^2.10.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.7",
+    "@types/canvas-confetti": "^1.6.4",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/uuid": "^9.0.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.1.7",
+    "typescript": "^5.7.0",
+    "vite": "^6.3.5"
+  }
+}
+
+================================================================================
+FILE: src/types.ts (COMPLETE)
+================================================================================
+
+export interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  position: string;
+  avatar: string;
+  active: boolean;
+  email: string;
+  password: string;
+  twoFactorEnabled: boolean;
+}
+
+export interface AdminConfig {
+  password: string;
+  email: string;
+  twoFactorEnabled: boolean;
+}
+
+export interface OTPSession {
+  email: string;
+  code: string;
+  expiresAt: number;
+  purpose: 'admin-login' | 'employee-login' | 'password-change';
+}
+
+export interface ShootEntry {
+  id: string;
+  date: string;
+  time: string;
+  employeeId: string;
+  type: 'indoor' | 'outdoor';
+  checkIn: string;
+  checkOut: string | null;
+  totalHours: number;
+  location: string;
+  clientName: string;
+  projectDetails: string;
+  photoUrl: string | null;
+  photoName: string | null;
+  submittedAt: string;
+  locked: boolean;
+}
+
+export interface DailyReport {
+  id: string;
+  date: string;
+  time: string;
+  employeeId: string;
+  checkIn: string;
+  checkOut: string | null;
+  totalHours: number;
+  tasks: TaskItem[];
+  summary: string;
+  challenges: string;
+  tomorrowPlan: string;
+  photoUrl: string | null;
+  photoName: string | null;
+  submittedAt: string;
+  locked: boolean;
+}
+
+export interface TaskItem {
+  id: string;
+  description: string;
+  status: 'completed' | 'in-progress' | 'pending';
+  hours: number;
+}
+
+export type UserRole = 'admin' | 'employee';
+
+export interface Notification {
+  id: string;
+  type: 'email' | 'success' | 'error' | 'info';
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  to?: string;
+  subject?: string;
+  code?: string;
+}
+
+================================================================================
+FILE: src/utils.ts (COMPLETE)
+================================================================================
+
+export const formatDate = (date: string | Date, fmt: string = 'dd MMM yyyy'): string => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  if (fmt === 'dd MMM yyyy') return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  if (fmt === 'EEEE, dd MMM yyyy') return `${days[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  if (fmt === 'yyyy-MM-dd') return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return d.toLocaleDateString();
+};
+
+export const formatTime = (time: string): string => {
+  if (!time) return '--:--';
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const displayH = h % 12 || 12;
+  return `${displayH}:${String(m).padStart(2, '0')} ${ampm}`;
+};
+
+export const getCurrentTime = (): string => {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+};
+
+export const getCurrentDate = (): string => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+export const calculateHours = (checkIn: string, checkOut: string | null): number => {
+  if (!checkIn || !checkOut) return 0;
+  const [inH, inM] = checkIn.split(':').map(Number);
+  const [outH, outM] = checkOut.split(':').map(Number);
+  return Math.round(((outH * 60 + outM) - (inH * 60 + inM)) / 60 * 100) / 100;
+};
+
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+  });
+};
+
+================================================================================
+FILE: src/index.css (COMPLETE)
+================================================================================
+
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  input[type="date"], input[type="time"] {
+    color-scheme: light;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+================================================================================
+FILE: src/main.tsx (COMPLETE)
+================================================================================
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App.tsx";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+
+================================================================================
+FILE: src/store.ts (COMPLETE - 348 lines)
+================================================================================
+
+import { Employee, AdminConfig, OTPSession, ShootEntry, DailyReport, Notification } from './types';
+
+const KEYS = {
+  EMPLOYEES: 'app_employees_v2',
+  SHOOTS: 'app_shoot_entries',
+  REPORTS: 'app_daily_reports',
+  SHEETS_URL: 'app_sheets_url',
+  ADMIN_CONFIG: 'app_admin_config',
+  OTP_SESSION: 'app_otp_session',
+  NOTIFICATIONS: 'app_notifications',
+};
+
+const defaultEmployees: Employee[] = [
+  { id: 'emp-1', name: 'Rahul Sharma', department: 'Camera', position: 'Cinematographer', avatar: 'RS', active: true, email: 'rahul@studio.com', password: 'rahul123', twoFactorEnabled: true },
+  { id: 'emp-2', name: 'Priya Patel', department: 'Production', position: 'Producer', avatar: 'PP', active: true, email: 'priya@studio.com', password: 'priya123', twoFactorEnabled: true },
+  { id: 'emp-3', name: 'Amit Kumar', department: 'Lighting', position: 'Gaffer', avatar: 'AK', active: true, email: 'amit@studio.com', password: 'amit123', twoFactorEnabled: false },
+  { id: 'emp-4', name: 'Sneha Gupta', department: 'Post Production', position: 'Editor', avatar: 'SG', active: true, email: 'sneha@studio.com', password: 'sneha123', twoFactorEnabled: true },
+  { id: 'emp-5', name: 'Vikram Singh', department: 'Camera', position: 'Camera Operator', avatar: 'VS', active: true, email: 'vikram@studio.com', password: 'vikram123', twoFactorEnabled: false },
+];
+
+const defaultAdminConfig: AdminConfig = {
+  password: 'admin123',
+  email: 'admin@studio.com',
+  twoFactorEnabled: true,
+};
+
+const generateSampleShoots = (): ShootEntry[] => {
+  const entries: ShootEntry[] = [];
+  const today = new Date();
+  const locations = ['Studio A', 'Studio B', 'Client Office', 'Warehouse'];
+  const clients = ['Tata Motors', 'Reliance Retail', 'Flipkart', 'Amazon India'];
+
+  for (let i = 6; i >= 1; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+    const emp = defaultEmployees[Math.floor(Math.random() * defaultEmployees.length)];
+    entries.push({
+      id: `shoot-${i}`,
+      date: date.toISOString().split('T')[0],
+      time: '09:00',
+      employeeId: emp.id,
+      type: i % 2 === 0 ? 'indoor' : 'outdoor',
+      checkIn: '09:00',
+      checkOut: '17:30',
+      totalHours: 8.5,
+      location: locations[Math.floor(Math.random() * locations.length)],
+      clientName: clients[Math.floor(Math.random() * clients.length)],
+      projectDetails: 'Product photography and video shoot',
+      photoUrl: null,
+      photoName: null,
+      submittedAt: date.toISOString(),
+      locked: true,
+    });
+  }
+  return entries;
+};
+
+const generateSampleReports = (): DailyReport[] => {
+  const reports: DailyReport[] = [];
+  const today = new Date();
+
+  for (let i = 5; i >= 1; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+    const emp = defaultEmployees[Math.floor(Math.random() * defaultEmployees.length)];
+    reports.push({
+      id: `report-${i}`,
+      date: date.toISOString().split('T')[0],
+      time: '09:00',
+      employeeId: emp.id,
+      checkIn: '09:00',
+      checkOut: '17:00',
+      totalHours: 8,
+      tasks: [
+        { id: `t1-${i}`, description: 'Video editing for client project', status: 'completed', hours: 3 },
+        { id: `t2-${i}`, description: 'Team meeting and planning', status: 'completed', hours: 1 },
+        { id: `t3-${i}`, description: 'Color grading and review', status: 'completed', hours: 2 },
+      ],
+      summary: 'Completed all assigned tasks for the day.',
+      challenges: '',
+      tomorrowPlan: 'Continue with post-production work.',
+      photoUrl: null,
+      photoName: null,
+      submittedAt: date.toISOString(),
+      locked: true,
+    });
+  }
+  return reports;
+};
+
+// Admin Config
+export const getAdminConfig = (): AdminConfig => {
+  const stored = localStorage.getItem(KEYS.ADMIN_CONFIG);
+  if (stored) return JSON.parse(stored);
+  localStorage.setItem(KEYS.ADMIN_CONFIG, JSON.stringify(defaultAdminConfig));
+  return defaultAdminConfig;
+};
+
+export const saveAdminConfig = (config: AdminConfig) => {
+  localStorage.setItem(KEYS.ADMIN_CONFIG, JSON.stringify(config));
+};
+
+export const verifyAdminPassword = (password: string): boolean => {
+  return getAdminConfig().password === password;
+};
+
+export const changeAdminPassword = (oldPassword: string, newPassword: string): boolean => {
+  const config = getAdminConfig();
+  if (config.password !== oldPassword) return false;
+  config.password = newPassword;
+  saveAdminConfig(config);
+  return true;
+};
+
+// OTP / 2FA System
+export const generateOTP = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+export const createOTPSession = (email: string, purpose: OTPSession['purpose']): string => {
+  const code = generateOTP();
+  const session: OTPSession = {
+    email,
+    code,
+    expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+    purpose,
+  };
+  localStorage.setItem(KEYS.OTP_SESSION, JSON.stringify(session));
+  
+  // Create email notification (simulated)
+  addNotification({
+    type: 'email',
+    title: '🔐 Verification Code - StudioTrack Pro',
+    message: `Your verification code is: ${code}. This code expires in 5 minutes. Do not share this code with anyone.`,
+    to: email,
+    subject: 'Two-Factor Authentication Code',
+    code,
+  });
+  
+  return code;
+};
+
+export const verifyOTP = (code: string): boolean => {
+  const stored = localStorage.getItem(KEYS.OTP_SESSION);
+  if (!stored) return false;
+  const session: OTPSession = JSON.parse(stored);
+  if (Date.now() > session.expiresAt) {
+    localStorage.removeItem(KEYS.OTP_SESSION);
+    return false;
+  }
+  if (session.code === code) {
+    localStorage.removeItem(KEYS.OTP_SESSION);
+    return true;
+  }
+  return false;
+};
+
+export const getCurrentOTP = (): string | null => {
+  const stored = localStorage.getItem(KEYS.OTP_SESSION);
+  if (!stored) return null;
+  const session: OTPSession = JSON.parse(stored);
+  if (Date.now() > session.expiresAt) {
+    localStorage.removeItem(KEYS.OTP_SESSION);
+    return null;
+  }
+  return session.code;
+};
+
+// Notifications (Simulated Email Inbox)
+export const getNotifications = (): Notification[] => {
+  const stored = localStorage.getItem(KEYS.NOTIFICATIONS);
+  if (stored) return JSON.parse(stored);
+  return [];
+};
+
+export const addNotification = (notification: Pick<Notification, 'type' | 'title' | 'message'> & Partial<Pick<Notification, 'to' | 'subject' | 'code'>>) => {
+  const notifications = getNotifications();
+  notifications.unshift({
+    id: `notif-${Date.now()}`,
+    type: notification.type,
+    title: notification.title,
+    message: notification.message,
+    timestamp: Date.now(),
+    read: false,
+    to: notification.to,
+    subject: notification.subject,
+    code: notification.code,
+  });
+  // Keep only last 50 notifications
+  const trimmed = notifications.slice(0, 50);
+  localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(trimmed));
+};
+
+export const markNotificationRead = (id: string) => {
+  const notifications = getNotifications().map(n => n.id === id ? { ...n, read: true } : n);
+  localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify(notifications));
+};
+
+export const clearNotifications = () => {
+  localStorage.setItem(KEYS.NOTIFICATIONS, JSON.stringify([]));
+};
+
+// Employees
+export const getEmployees = (): Employee[] => {
+  const stored = localStorage.getItem(KEYS.EMPLOYEES);
+  if (stored) return JSON.parse(stored);
+  localStorage.setItem(KEYS.EMPLOYEES, JSON.stringify(defaultEmployees));
+  return defaultEmployees;
+};
+
+export const saveEmployees = (employees: Employee[]) => {
+  localStorage.setItem(KEYS.EMPLOYEES, JSON.stringify(employees));
+};
+
+export const addEmployee = (emp: Employee) => {
+  const emps = getEmployees();
+  emps.push(emp);
+  saveEmployees(emps);
+};
+
+export const updateEmployee = (id: string, data: Partial<Employee>) => {
+  const emps = getEmployees();
+  const idx = emps.findIndex(e => e.id === id);
+  if (idx >= 0) { emps[idx] = { ...emps[idx], ...data }; saveEmployees(emps); }
+};
+
+export const deleteEmployee = (id: string) => {
+  const emps = getEmployees().filter(e => e.id !== id);
+  saveEmployees(emps);
+};
+
+export const verifyEmployeePassword = (id: string, password: string): boolean => {
+  const emp = getEmployees().find(e => e.id === id);
+  return emp?.password === password;
+};
+
+export const changeEmployeePassword = (id: string, oldPassword: string, newPassword: string): boolean => {
+  const emps = getEmployees();
+  const idx = emps.findIndex(e => e.id === id);
+  if (idx < 0 || emps[idx].password !== oldPassword) return false;
+  emps[idx].password = newPassword;
+  saveEmployees(emps);
+  return true;
+};
+
+// Shoot Entries
+export const getShootEntries = (): ShootEntry[] => {
+  const stored = localStorage.getItem(KEYS.SHOOTS);
+  if (stored) return JSON.parse(stored);
+  const sample = generateSampleShoots();
+  localStorage.setItem(KEYS.SHOOTS, JSON.stringify(sample));
+  return sample;
+};
+
+export const saveShootEntry = (entry: ShootEntry) => {
+  const entries = getShootEntries();
+  const idx = entries.findIndex(e => e.id === entry.id);
+  if (idx >= 0) entries[idx] = entry;
+  else entries.push(entry);
+  entries.sort((a, b) => b.date.localeCompare(a.date));
+  localStorage.setItem(KEYS.SHOOTS, JSON.stringify(entries));
+};
+
+export const deleteShootEntry = (id: string) => {
+  const entries = getShootEntries().filter(e => e.id !== id);
+  localStorage.setItem(KEYS.SHOOTS, JSON.stringify(entries));
+};
+
+// Daily Reports
+export const getDailyReports = (): DailyReport[] => {
+  const stored = localStorage.getItem(KEYS.REPORTS);
+  if (stored) return JSON.parse(stored);
+  const sample = generateSampleReports();
+  localStorage.setItem(KEYS.REPORTS, JSON.stringify(sample));
+  return sample;
+};
+
+export const saveDailyReport = (report: DailyReport) => {
+  const reports = getDailyReports();
+  const idx = reports.findIndex(r => r.id === report.id);
+  if (idx >= 0) reports[idx] = report;
+  else reports.push(report);
+  reports.sort((a, b) => b.date.localeCompare(a.date));
+  localStorage.setItem(KEYS.REPORTS, JSON.stringify(reports));
+};
+
+export const deleteDailyReport = (id: string) => {
+  const reports = getDailyReports().filter(r => r.id !== id);
+  localStorage.setItem(KEYS.REPORTS, JSON.stringify(reports));
+};
+
+// Google Sheets
+export const getSheetsUrl = (): string => {
+  return localStorage.getItem(KEYS.SHEETS_URL) || '';
+};
+
+export const setSheetsUrl = (url: string) => {
+  localStorage.setItem(KEYS.SHEETS_URL, url);
+};
+
+export const syncToGoogleSheets = async (type: 'shoot' | 'report', data: any): Promise<boolean> => {
+  const url = getSheetsUrl();
+  if (!url) return false;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data, timestamp: new Date().toISOString() }),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const syncAllToSheets = async (): Promise<boolean> => {
+  const url = getSheetsUrl();
+  if (!url) return false;
+  try {
+    const employees = getEmployees();
+    const shoots = getShootEntries();
+    const reports = getDailyReports();
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'full_backup', employees, shoots, reports, timestamp: new Date().toISOString() }),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const getEmployeeName = (id: string): string => {
+  const emp = getEmployees().find(e => e.id === id);
+  return emp?.name || 'Unknown';
+};
+
+export const generateId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+================================================================================
+NOTE: Due to file size limitations, the following large component files
+are available in the src/components/ directory:
+
+- Login.tsx (340 lines) - Multi-step login with 2FA
+- AdminPanel.tsx (1117 lines) - Full admin management
+- AdminDashboard.tsx (250 lines) - Analytics dashboard
+- EmployeeDashboard.tsx (656 lines) - Employee portal
+- DesktopLayout.tsx (90 lines) - Desktop wrapper
+- App.tsx (293 lines) - Main app with routing
+
+To access complete code for these files, use the read_file tool with
+the specific file path, or refer to the actual source files in the project.
+
+================================================================================
+FEATURES IMPLEMENTED:
+================================================================================
+
+✓ Professional desktop UI with sidebar navigation
+✓ Dashboard analytics with charts and statistics
+✓ Keyboard shortcuts (Alt+1-6, ?)
+✓ Password-based authentication
+✓ Two-factor authentication (2FA) via email OTP
+✓ Password management (admin & employees)
+✓ Employee management (add/edit/delete/reset)
+✓ Indoor/Outdoor shoot tracking
+✓ Daily work reports with tasks
+✓ JPEG photo upload with preview
+✓ Auto-calculated working hours
+✓ Entry locking (admin-only edit after submission)
+✓ Google Sheets backup integration
+✓ Simulated email inbox for OTP codes
+✓ Fully responsive (desktop/tablet/mobile)
+✓ LocalStorage persistence
+✓ Modern UI with animations and transitions
+
+================================================================================
+TECH STACK:
+================================================================================
+
+- React 18.2.0
+- TypeScript 5.7.0
+- Tailwind CSS 4.1.7
+- Vite 6.3.5
+- Lucide React 0.294.0 (icons)
+- LocalStorage (data persistence)
+
+================================================================================
+INSTALLATION & RUNNING:
+================================================================================
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+================================================================================
+END OF DUMP
+================================================================================
+
+For complete source code of all component files, please refer to the actual
+source files in the src/ and src/components/ directories.
+
+This dump includes all core logic files (types, utils, store) completely.
+Component files are available in the project directory.
+
+================================================================================
