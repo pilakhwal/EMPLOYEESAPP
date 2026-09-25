@@ -1,0 +1,556 @@
+================================================================================
+STUDIOTRACK PRO - COMPLETE APPLICATION DUMP
+================================================================================
+Version: 3.0.0
+Generated: 2026
+Description: Professional Desktop & Mobile Attendance and Work Report System
+================================================================================
+
+📋 TABLE OF CONTENTS:
+================================================================================
+1. Project Structure
+2. Configuration Files
+3. Source Code Files
+4. Default Credentials
+5. Setup Instructions
+6. Features List
+
+================================================================================
+1. PROJECT STRUCTURE
+================================================================================
+
+studiTrack-pro/
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.js
+├── README.md
+├── src/
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── index.css
+│   ├── types.ts
+│   ├── store.ts
+│   ├── utils.ts
+│   └── components/
+│       ├── Login.tsx
+│       ├── AdminPanel.tsx
+│       ├── AdminDashboard.tsx
+│       ├── EmployeeDashboard.tsx
+│       └── DesktopLayout.tsx
+
+================================================================================
+2. CONFIGURATION FILES
+================================================================================
+
+--- FILE: package.json ---
+
+{
+  "name": "sandbox-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@supabase/supabase-js": "^2.98.0",
+    "canvas-confetti": "^1.9.3",
+    "date-fns": "^2.30.0",
+    "framer-motion": "^11.16.1",
+    "lucide-react": "^0.294.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0",
+    "recharts": "^2.10.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.7",
+    "@types/canvas-confetti": "^1.6.4",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/uuid": "^9.0.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.1.7",
+    "typescript": "^5.7.0",
+    "vite": "^6.3.5"
+  }
+}
+
+--- FILE: index.html ---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudioTrack Pro - Professional Desktop & Mobile Attendance System</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+--- FILE: vite.config.js ---
+
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+});
+
+--- FILE: tsconfig.json ---
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
+
+================================================================================
+3. SOURCE CODE FILES
+================================================================================
+
+--- FILE: src/main.tsx ---
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App.tsx";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+
+--- FILE: src/index.css ---
+
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  input[type="date"], input[type="time"] {
+    color-scheme: light;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+--- FILE: src/types.ts ---
+
+export interface Employee {
+  id: string;
+  name: string;
+  department: string;
+  position: string;
+  avatar: string;
+  active: boolean;
+  email: string;
+  password: string;
+  twoFactorEnabled: boolean;
+}
+
+export interface AdminConfig {
+  password: string;
+  email: string;
+  twoFactorEnabled: boolean;
+}
+
+export interface OTPSession {
+  email: string;
+  code: string;
+  expiresAt: number;
+  purpose: 'admin-login' | 'employee-login' | 'password-change';
+}
+
+export interface ShootEntry {
+  id: string;
+  date: string;
+  time: string;
+  employeeId: string;
+  type: 'indoor' | 'outdoor';
+  checkIn: string;
+  checkOut: string | null;
+  totalHours: number;
+  location: string;
+  clientName: string;
+  projectDetails: string;
+  photoUrl: string | null;
+  photoName: string | null;
+  submittedAt: string;
+  locked: boolean;
+}
+
+export interface DailyReport {
+  id: string;
+  date: string;
+  time: string;
+  employeeId: string;
+  checkIn: string;
+  checkOut: string | null;
+  totalHours: number;
+  tasks: TaskItem[];
+  summary: string;
+  challenges: string;
+  tomorrowPlan: string;
+  photoUrl: string | null;
+  photoName: string | null;
+  submittedAt: string;
+  locked: boolean;
+}
+
+export interface TaskItem {
+  id: string;
+  description: string;
+  status: 'completed' | 'in-progress' | 'pending';
+  hours: number;
+}
+
+export type UserRole = 'admin' | 'employee';
+
+export interface Notification {
+  id: string;
+  type: 'email' | 'success' | 'error' | 'info';
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  to?: string;
+  subject?: string;
+  code?: string;
+}
+
+--- FILE: src/utils.ts ---
+
+export const formatDate = (date: string | Date, fmt: string = 'dd MMM yyyy'): string => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  if (fmt === 'dd MMM yyyy') return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  if (fmt === 'EEEE, dd MMM yyyy') return `${days[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  if (fmt === 'yyyy-MM-dd') return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return d.toLocaleDateString();
+};
+
+export const formatTime = (time: string): string => {
+  if (!time) return '--:--';
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const displayH = h % 12 || 12;
+  return `${displayH}:${String(m).padStart(2, '0')} ${ampm}`;
+};
+
+export const getCurrentTime = (): string => {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+};
+
+export const getCurrentDate = (): string => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+export const calculateHours = (checkIn: string, checkOut: string | null): number => {
+  if (!checkIn || !checkOut) return 0;
+  const [inH, inM] = checkIn.split(':').map(Number);
+  const [outH, outM] = checkOut.split(':').map(Number);
+  return Math.round(((outH * 60 + outM) - (inH * 60 + inM)) / 60 * 100) / 100;
+};
+
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+  });
+};
+
+--- FILE: src/store.ts ---
+
+[COMPLETE FILE - 348 LINES]
+[Contains all data management functions including:]
+- Employee CRUD operations
+- Admin config management
+- OTP/2FA system
+- Notifications (email inbox)
+- Shoot entries management
+- Daily reports management
+- Google Sheets integration
+- Password management
+
+[Full code available in src/store.ts file]
+
+--- FILE: src/App.tsx ---
+
+[COMPLETE FILE - 293 LINES]
+[Contains main application component with:]
+- Login state management
+- Role-based routing
+- Desktop layout with sidebar
+- Keyboard shortcuts
+- Tab navigation
+
+[Full code available in src/App.tsx file]
+
+--- FILE: src/components/Login.tsx ---
+
+[COMPLETE FILE - 430 LINES]
+[Contains multi-step login with:]
+- Role selection
+- Password authentication
+- 2FA OTP verification
+- Email inbox simulation
+
+[Full code available in src/components/Login.tsx file]
+
+--- FILE: src/components/AdminPanel.tsx ---
+
+[COMPLETE FILE - 1170 LINES]
+[Contains admin management with:]
+- Employee management
+- Shoot entry management
+- Daily report management
+- Password management
+- 2FA toggle
+- Settings page
+- Data export/import
+
+[Full code available in src/components/AdminPanel.tsx file]
+
+--- FILE: src/components/AdminDashboard.tsx ---
+
+[COMPLETE FILE - 316 LINES]
+[Contains analytics dashboard with:]
+- Stats cards
+- Weekly activity chart
+- Quick stats
+- Recent shoots
+- Top performers
+
+[Full code available in src/components/AdminDashboard.tsx file]
+
+--- FILE: src/components/EmployeeDashboard.tsx ---
+
+[COMPLETE FILE - 656 LINES]
+[Contains employee portal with:]
+- Tab navigation
+- Entry forms
+- Photo upload
+- Entry history
+- Password change
+
+[Full code available in src/components/EmployeeDashboard.tsx file]
+
+--- FILE: src/components/DesktopLayout.tsx ---
+
+[COMPLETE FILE - 101 LINES]
+[Contains desktop layout wrapper with:]
+- Sidebar navigation
+- Header
+- Footer
+- Responsive design
+
+[Full code available in src/components/DesktopLayout.tsx file]
+
+================================================================================
+4. DEFAULT CREDENTIALS
+================================================================================
+
+ADMIN:
+  Password: admin123
+  Email: lalit2info@gmail.com
+  2FA: Enabled ✅
+
+EMPLOYEES:
+  1. Rahul Sharma
+     Password: rahul123
+     Email: rahul@studio.com
+     Department: Camera
+     Position: Cinematographer
+     2FA: Enabled ✅
+
+  2. Priya Patel
+     Password: priya123
+     Email: priya@studio.com
+     Department: Production
+     Position: Producer
+     2FA: Enabled ✅
+
+  3. Amit Kumar
+     Password: amit123
+     Email: amit@studio.com
+     Department: Lighting
+     Position: Gaffer
+     2FA: Disabled ❌
+
+  4. Sneha Gupta
+     Password: sneha123
+     Email: sneha@studio.com
+     Department: Post Production
+     Position: Editor
+     2FA: Enabled ✅
+
+  5. Vikram Singh
+     Password: vikram123
+     Email: vikram@studio.com
+     Department: Camera
+     Position: Camera Operator
+     2FA: Disabled ❌
+
+================================================================================
+5. SETUP INSTRUCTIONS
+================================================================================
+
+INSTALLATION:
+  npm install
+
+DEVELOPMENT:
+  npm run dev
+  # Opens at http://localhost:5173
+
+PRODUCTION BUILD:
+  npm run build
+  # Creates dist/ folder
+
+PREVIEW BUILD:
+  npm run preview
+
+================================================================================
+6. FEATURES LIST
+================================================================================
+
+✅ Professional desktop UI with sidebar navigation
+✅ Dashboard analytics with charts and statistics
+✅ Keyboard shortcuts (Alt+1-6, ?)
+✅ Password-based authentication
+✅ Two-factor authentication (2FA) via email OTP
+✅ Password management (admin & employees)
+✅ Employee management (add/edit/delete/reset)
+✅ Indoor/Outdoor shoot tracking
+✅ Daily work reports with tasks
+✅ JPEG photo upload with preview
+✅ Auto-calculated working hours
+✅ Entry locking (admin-only edit after submission)
+✅ Google Sheets backup integration
+✅ Simulated email inbox for OTP codes
+✅ Data export/import (JSON backup)
+✅ Fully responsive (desktop/tablet/mobile)
+✅ LocalStorage persistence
+✅ Modern UI with animations and transitions
+
+================================================================================
+KEYBOARD SHORTCUTS (Admin Panel):
+================================================================================
+
+  ?        - Show/hide shortcuts modal
+  Alt + 1  - Dashboard
+  Alt + 2  - Employees
+  Alt + 3  - Indoor Shoots
+  Alt + 4  - Outdoor Shoots
+  Alt + 5  - Daily Reports
+  Alt + 6  - Settings
+
+================================================================================
+TECH STACK:
+================================================================================
+
+Frontend:    React 18.2.0
+Language:    TypeScript 5.7.0
+Styling:     Tailwind CSS 4.1.7
+Build Tool:  Vite 6.3.5
+Icons:       Lucide React 0.294.0
+Storage:     LocalStorage (browser)
+
+================================================================================
+LOCAL STORAGE KEYS:
+================================================================================
+
+  app_employees_v2     - Employee records
+  app_shoot_entries    - Shoot entries
+  app_daily_reports    - Daily reports
+  app_admin_config     - Admin settings
+  app_otp_session      - OTP sessions
+  app_notifications    - Email inbox
+  app_sheets_url       - Google Sheets URL
+
+================================================================================
+NOTES:
+================================================================================
+
+1. All data is stored in browser localStorage
+2. For production, integrate with backend database
+3. Google Sheets backup requires Apps Script deployment
+4. Photo uploads stored as base64 in localStorage
+5. OTP codes expire after 5 minutes
+6. Entries locked after submission (admin-only edit)
+7. Admin email: lalit2info@gmail.com
+
+================================================================================
+END OF COMPLETE APPLICATION DUMP
+================================================================================
+
+© 2026 StudioTrack Pro - Professional Production Management System
+Version 3.0.0
+
+For complete source code of all component files, refer to the actual
+source files in the src/ and src/components/ directories.
+
+================================================================================
