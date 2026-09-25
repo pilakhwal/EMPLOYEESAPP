@@ -1,50 +1,44 @@
-import { format, parseISO, isToday, isYesterday, startOfWeek, endOfWeek, eachDayOfInterval, differenceInMinutes } from 'date-fns';
-import { AttendanceRecord, WorkReport } from './types';
-
-export const formatDate = (date: string | Date, fmt: string = 'MMM dd, yyyy'): string => {
-  if (typeof date === 'string') {
-    return format(parseISO(date), fmt);
-  }
-  return format(date, fmt);
+export const formatDate = (date: string | Date, fmt: string = 'dd MMM yyyy'): string => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  if (fmt === 'dd MMM yyyy') return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  if (fmt === 'EEEE, dd MMM yyyy') return `${days[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  if (fmt === 'yyyy-MM-dd') return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return d.toLocaleDateString();
 };
 
 export const formatTime = (time: string): string => {
-  const [hours, minutes] = time.split(':');
-  const h = parseInt(hours);
+  if (!time) return '--:--';
+  const [h, m] = time.split(':').map(Number);
   const ampm = h >= 12 ? 'PM' : 'AM';
   const displayH = h % 12 || 12;
-  return `${displayH}:${minutes} ${ampm}`;
+  return `${displayH}:${String(m).padStart(2, '0')} ${ampm}`;
 };
 
-export const getCurrentTimeString = (): string => {
+export const getCurrentTime = (): string => {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 };
 
-export const getCurrentDateString = (): string => {
-  return format(new Date(), 'yyyy-MM-dd');
+export const getCurrentDate = (): string => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
-export const isLate = (checkInTime: string): boolean => {
-  const [hours, minutes] = checkInTime.split(':').map(Number);
-  const checkInMinutes = hours * 60 + minutes;
-  const officeStartMinutes = 9 * 60; // 9:00 AM
-  return checkInMinutes > officeStartMinutes;
-};
-
-export const calculateWorkHours = (checkIn: string, checkOut: string): number => {
+export const calculateHours = (checkIn: string, checkOut: string | null): number => {
+  if (!checkIn || !checkOut) return 0;
   const [inH, inM] = checkIn.split(':').map(Number);
   const [outH, outM] = checkOut.split(':').map(Number);
-  return (outH * 60 + outM - (inH * 60 + inM)) / 60;
+  return Math.round(((outH * 60 + outM) - (inH * 60 + inM)) / 60 * 100) / 100;
 };
 
-export const getWeekDates = (): string[] => {
-  const today = new Date();
-  const start = startOfWeek(today, { weekStartsOn: 1 });
-  const end = endOfWeek(today, { weekStartsOn: 1 });
-  return eachDayOfInterval({ start, end }).map(d => format(d, 'yyyy-MM-dd'));
-};
-
-export const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+  });
 };

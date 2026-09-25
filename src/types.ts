@@ -1,20 +1,46 @@
-export interface AttendanceRecord {
+export interface Employee {
   id: string;
-  date: string;
-  checkIn: string | null;
-  checkOut: string | null;
-  status: 'present' | 'late' | 'absent' | 'half-day';
-  note: string;
+  name: string;
+  department: string;
+  position: string;
+  avatar: string;
+  active: boolean;
 }
 
-export interface WorkReport {
+export interface ShootEntry {
   id: string;
   date: string;
+  time: string;
+  employeeId: string;
+  type: 'indoor' | 'outdoor';
+  checkIn: string;
+  checkOut: string | null;
+  totalHours: number;
+  location: string;
+  clientName: string;
+  projectDetails: string;
+  photoUrl: string | null;
+  photoName: string | null;
+  submittedAt: string;
+  locked: boolean;
+}
+
+export interface DailyReport {
+  id: string;
+  date: string;
+  time: string;
+  employeeId: string;
+  checkIn: string;
+  checkOut: string | null;
+  totalHours: number;
   tasks: TaskItem[];
   summary: string;
   challenges: string;
   tomorrowPlan: string;
+  photoUrl: string | null;
+  photoName: string | null;
   submittedAt: string;
+  locked: boolean;
 }
 
 export interface TaskItem {
@@ -24,9 +50,12 @@ export interface TaskItem {
   hours: number;
 }
 
-export interface Employee {
-  name: string;
-  department: string;
-  position: string;
-  avatar: string;
+export type UserRole = 'admin' | 'employee';
+
+export interface AppState {
+  currentUser: Employee | null;
+  role: UserRole;
+  employees: Employee[];
+  shootEntries: ShootEntry[];
+  dailyReports: DailyReport[];
 }
